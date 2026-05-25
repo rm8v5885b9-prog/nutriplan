@@ -1,13 +1,16 @@
 export default async function handler(req, res) {
-  // Allow only POST
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   const { age, weight, height, gender, activity, goal, budget, city, preferences } = req.body;
 
@@ -15,61 +18,56 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Заполни все обязательные поля' });
   }
 
-  const prompt = `Ты нутрициолог и составляешь персональный план питания на 7 дней.
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API ключ не настроен на сервере' });
+  }
 
-Данные пользователя:
-- Пол: ${gender}
-- Возраст: ${age} лет
-- Вес: ${weight} кг, Рост: ${height} см
-- Активность: ${activity}
-- Цель: ${goal}
-- Бюджет на неделю: ${budget} рублей (город: ${city || 'Россия'})
-- Предпочтения/ограничения: ${preferences || 'нет особых ограничений'}
+  const prompt = `Ты нутрициолог. Составь план питания на 7 дней.
 
-Составь подробный план питания. Ответь СТРОГО в следующем формате:
+Пол: ${gender}, Возраст: ${age} лет, Вес: ${weight} кг, Рост: ${height} см
+Активность: ${activity}
+Цель: ${goal}
+Бюджет: ${budget} рублей на неделю (${city || 'Россия'})
+Ограничения: ${preferences || 'нет'}
+
+Формат ответа:
 
 ## 📊 Твои показатели
-
-Рассчитай суточную норму калорий (формула Миффлина-Сан Жеора) и КБЖУ. Укажи конкретные цифры.
+Суточная норма калорий и КБЖУ.
 
 ## 🍽️ Меню на 7 дней
-
-Для каждого дня (День 1 — День 7) укажи:
-### День [N] — [день недели]
-- Завтрак: [блюдо] (~[калории] ккал)
-- Обед: [блюдо] (~[калории] ккал)
-- Ужин: [блюдо] (~[калории] ккал)
-- Перекус: [блюдо] (~[калории] ккал)
+### День 1 — Понедельник
+- Завтрак: [блюдо] (~300 ккал)
+- Обед: [блюдо] (~500 ккал)
+- Ужин: [блюдо] (~400 ккал)
+- Перекус: [блюдо] (~150 ккал)
+(и так для всех 7 дней)
 
 ## 🛒 Список продуктов на неделю
-
-Составь таблицу нужных продуктов в формате:
 ПРОДУКТ | КОЛИЧЕСТВО | ЦЕНА (₽)
-
-Учитывай реальные цены в ${city || 'России'}. Бюджет: ${budget} рублей.
-
 Итого: [сумма] рублей
 
 ## 💡 Советы
-
-3-4 конкретных совета по данному плану питания.`;
+3 совета по плану.`;
 
   try {
-    const response = await fetch(
-     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 4000, temperature: 0.7 }
-        })
-      }
-    );
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 4000, temperature: 0.7 }
+      })
+    });
 
     const data = await response.json();
 
     if (data.error) {
-      return res.status(500).json({ error: data.error.message });
+      return res.status(500).json({ error: 'Gemini: ' + data.error.message });
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
