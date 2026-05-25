@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriPlan — Питание под твой бюджет</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --accent: #7fff6e;
+    --accent2: #4fffdf;
+    --accent3: #ff6eb4;
+    --text: #f0f0f8;
+    --muted: #6b6b8a;
+    --card-bg: #16161f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Satoshi', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  .orb { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0; }
+  .orb1 { width: 500px; height: 500px; background: rgba(127,255,110,0.06); top: -200px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(79,255,223,0.05); bottom: 100px; left: -150px; }
+  .orb3 { width: 300px; height: 300px; background: rgba(255,110,180,0.04); top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+  header {
+    position: relative; z-index: 10;
+    padding: 32px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo { font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+
+  .badge {
+    font-size: 11px; font-weight: 500; padding: 6px 14px;
+    border-radius: 100px; border: 1px solid var(--border);
+    color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  .hero {
+    position: relative; z-index: 10;
+    padding: 80px 40px 60px;
+    max-width: 900px; margin: 0 auto; text-align: center;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; color: var(--accent);
+    border: 1px solid rgba(127,255,110,0.3);
+    padding: 6px 16px; border-radius: 100px; margin-bottom: 32px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .hero-tag::before { content: '✦'; font-size: 10px; }
+
+  h1 {
+    font-family: 'Clash Display', sans-serif;
+    font-size: clamp(42px, 7vw, 80px);
+    font-weight: 700; line-height: 1.05; letter-spacing: -2px; margin-bottom: 24px;
+  }
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .hero-sub { font-size: 18px; color: var(--muted); line-height: 1.6; max-width: 560px; margin: 0 auto 48px; }
+
+  .form-wrapper { position: relative; z-index: 10; max-width: 780px; margin: 0 auto; padding: 0 24px 60px; }
+
+  .form-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 24px; padding: 40px; position: relative; overflow: hidden;
+  }
+  .form-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    opacity: 0.6;
+  }
+
+  .form-section-title {
+    font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .form-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-1 { margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  input, select, textarea {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: 'Satoshi', sans-serif;
+    font-size: 15px; padding: 14px 16px; transition: all 0.2s; outline: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(127,255,110,0.1);
+  }
+  input.error { border-color: #ff6b6b; box-shadow: 0 0 0 3px rgba(255,107,107,0.1); }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .divider { height: 1px; background: var(--border); margin: 32px 0; }
+
+  .goal-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill {
+    padding: 10px 20px; border-radius: 100px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--text); }
+  .pill.active { border-color: var(--accent); background: rgba(127,255,110,0.12); color: var(--accent); }
+
+  .btn-generate {
+    width: 100%; margin-top: 32px; padding: 18px 32px;
+    background: var(--accent); color: #0a0a0f; border: none; border-radius: 14px;
+    font-family: 'Clash Display', sans-serif; font-size: 17px; font-weight: 700;
+    cursor: pointer; letter-spacing: -0.3px; transition: all 0.2s;
+  }
+  .btn-generate:hover { background: #9dff8e; transform: translateY(-1px); box-shadow: 0 12px 40px rgba(127,255,110,0.3); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .loading-bar { display: none; height: 3px; background: var(--border); border-radius: 100px; margin-top: 16px; overflow: hidden; }
+  .loading-bar.active { display: block; }
+  .loading-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px; animation: loading 2s ease-in-out infinite;
+  }
+  @keyframes loading {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 70%; margin-left: 15%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  .loading-text { text-align: center; color: var(--muted); font-size: 14px; margin-top: 12px; }
+
+  .error-msg {
+    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.3);
+    border-radius: 12px; padding: 14px 18px; color: #ff8080; font-size: 14px;
+    margin-top: 16px; display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* RESULT */
+  .result-wrapper { position: relative; z-index: 10; max-width: 780px; margin: 0 auto; padding: 0 24px 80px; display: none; }
+  .result-wrapper.visible { display: block; animation: fadeUp 0.5s ease; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 24px; padding: 40px; position: relative; overflow: hidden;
+  }
+  .result-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2), var(--accent3), transparent);
+    opacity: 0.7;
+  }
+
+  .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+  .result-title { font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .result-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat-chip { padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 500; border: 1px solid; }
+  .stat-chip.green { border-color: rgba(127,255,110,0.4); color: var(--accent); background: rgba(127,255,110,0.08); }
+  .stat-chip.teal { border-color: rgba(79,255,223,0.4); color: var(--accent2); background: rgba(79,255,223,0.08); }
+  .stat-chip.pink { border-color: rgba(255,110,180,0.4); color: var(--accent3); background: rgba(255,110,180,0.08); }
+
+  .result-content { line-height: 1.8; }
+  .result-content h2 { font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 600; margin: 28px 0 14px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+  .result-content h3 { font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 600; margin: 20px 0 10px; color: var(--accent2); }
+  .result-content p { color: #c0c0d8; margin-bottom: 10px; font-size: 15px; }
+  .result-content ul { list-style: none; padding: 0; margin-bottom: 12px; }
+  .result-content ul li {
+    padding: 10px 14px; margin-bottom: 6px; border-radius: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 14px; color: #c0c0d8; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .result-content ul li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-weight: 600; }
+  .result-content strong { color: var(--text); font-weight: 600; }
+
+  .day-block { background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
+  .day-block h3 { margin: 0 0 14px; font-size: 15px; color: var(--text); }
+  .meal-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 12px; font-size: 14px; }
+  .meal-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .meal-name { color: #c0c0d8; flex: 1; }
+  .meal-kcal { color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+  .shopping-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 12px; }
+  .shopping-table th { text-align: left; padding: 10px 14px; background: var(--surface2); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+  .shopping-table th:first-child { border-radius: 8px 0 0 8px; }
+  .shopping-table th:last-child { border-radius: 0 8px 8px 0; text-align: right; }
+  .shopping-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c0c0d8; }
+  .shopping-table td:last-child { text-align: right; color: var(--accent); font-weight: 600; }
+
+  .total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 14px; background: rgba(127,255,110,0.08);
+    border: 1px solid rgba(127,255,110,0.2); border-radius: 12px; margin-top: 12px; font-weight: 600;
+  }
+  .total-row .total-label { color: var(--text); }
+  .total-row .total-value { color: var(--accent); font-size: 18px; font-family: 'Clash Display', sans-serif; }
+
+  .btn-new {
+    width: 100%; margin-top: 32px; padding: 16px;
+    background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 14px; font-family: 'Satoshi', sans-serif; font-size: 15px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-new:hover { border-color: var(--accent); color: var(--text); }
+
+  @media (max-width: 600px) {
+    header { padding: 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .form-wrapper, .result-wrapper { padding: 0 16px 48px; }
+    .form-card, .result-card { padding: 24px 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    h1 { letter-spacing: -1px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<header>
+  <div class="logo">Nutri<span>Plan</span></div>
+  <div class="badge">AI · Бесплатно</div>
+</header>
+
+<section class="hero">
+  <div class="hero-tag">Питание под твой бюджет</div>
+  <h1>Твой план питания<br>на <em>неделю</em> — за секунды</h1>
+  <p class="hero-sub">Введи цель, параметры и бюджет — AI составит меню с КБЖУ, список продуктов и точные цены.</p>
+</section>
+
+<div class="form-wrapper">
+  <div class="form-card">
+
+    <div class="form-section-title">Твои параметры</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Возраст</label>
+        <input type="number" id="age" placeholder="25" min="10" max="99">
+      </div>
+      <div class="field">
+        <label>Вес (кг)</label>
+        <input type="number" id="weight" placeholder="70" min="30" max="300">
+      </div>
+      <div class="field">
+        <label>Рост (см)</label>
+        <input type="number" id="height" placeholder="175" min="100" max="250">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Пол</label>
+        <select id="gender">
+          <option value="мужской">Мужской</option>
+          <option value="женский">Женский</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Активность</label>
+        <select id="activity">
+          <option value="низкая (сидячая работа)">Низкая — сидячая работа</option>
+          <option value="умеренная (3-4 тренировки в неделю)">Умеренная — 3-4 тренировки</option>
+          <option value="высокая (ежедневные тренировки)">Высокая — каждый день</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-section-title">Цель</div>
+    <div class="goal-pills">
+      <div class="pill active" data-goal="похудеть">🔥 Похудеть</div>
+      <div class="pill" data-goal="набрать мышечную массу">💪 Набрать массу</div>
+      <div class="pill" data-goal="поддерживать вес">⚖️ Держать вес</div>
+      <div class="pill" data-goal="улучшить здоровье и самочувствие">❤️ Здоровье</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-section-title">Питание и бюджет</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Бюджет на неделю (₽)</label>
+        <input type="number" id="budget" placeholder="3000" min="500">
+      </div>
+      <div class="field">
+        <label>Страна / город</label>
+        <input type="text" id="city" placeholder="Москва, Россия">
+      </div>
+    </div>
+    <div class="grid-1">
+      <div class="field">
+        <label>Предпочтения и ограничения в еде</label>
+        <textarea id="preferences" placeholder="Например: не ем свинину, люблю куриное мясо, без молочки, аллергия на орехи..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generatePlan()">
+      ✦ Составить план питания
+    </button>
+    <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
+    <div class="loading-text" id="loadingText"></div>
+    <div class="error-msg" id="errorMsg"></div>
+
+  </div>
+</div>
+
+<div class="result-wrapper" id="resultWrapper">
+  <div class="result-card">
+    <div class="result-header">
+      <div class="result-title">Твой план питания</div>
+      <div class="result-stats" id="resultStats"></div>
+    </div>
+    <div class="result-content" id="resultContent"></div>
+    <button class="btn-new" onclick="newPlan()">↩ Составить новый план</button>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+  });
+
+  function getGoal() { return document.querySelector('.pill.active')?.dataset.goal || 'похудеть'; }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  function newPlan() {
+    document.getElementById('resultWrapper').classList.remove('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateFields() {
+    const fields = ['age', 'weight', 'height', 'budget'];
+    let valid = true;
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value) {
+        el.classList.add('error');
+        valid = false;
+      } else {
+        el.classList.remove('error');
+      }
+    });
+    return valid;
+  }
+
+  async function generatePlan() {
+    hideError();
+    if (!validateFields()) return showError('Заполни все обязательные поля (выделены красным)');
+
+    const payload = {
+      age: document.getElementById('age').value,
+      weight: document.getElementById('weight').value,
+      height: document.getElementById('height').value,
+      gender: document.getElementById('gender').value,
+      activity: document.getElementById('activity').value,
+      goal: getGoal(),
+      budget: document.getElementById('budget').value,
+      city: document.getElementById('city').value || 'Россия',
+      preferences: document.getElementById('preferences').value
+    };
+
+    const btn = document.getElementById('generateBtn');
+    const loadingText = document.getElementById('loadingText');
+    btn.disabled = true;
+    btn.textContent = '⏳ Составляю план...';
+    document.getElementById('loadingBar').classList.add('active');
+    document.getElementById('resultWrapper').classList.remove('visible');
+
+    const messages = [
+      'Рассчитываю твою норму калорий...',
+      'Подбираю продукты под бюджет...',
+      'Составляю меню на 7 дней...',
+      'Почти готово...'
+    ];
+    let msgIndex = 0;
+    loadingText.textContent = messages[0];
+    const msgInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % messages.length;
+      loadingText.textContent = messages[msgIndex];
+    }, 2000);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || 'Ошибка сервера');
+
+      renderResult(data.result, payload);
+
+    } catch (err) {
+      showError('Ошибка: ' + err.message);
+    } finally {
+      clearInterval(msgInterval);
+      loadingText.textContent = '';
+      btn.disabled = false;
+      btn.textContent = '✦ Составить план питания';
+      document.getElementById('loadingBar').classList.remove('active');
+    }
+  }
+
+  function renderResult(text, meta) {
+    document.getElementById('resultStats').innerHTML = `
+      <div class="stat-chip green">🎯 ${meta.goal}</div>
+      <div class="stat-chip teal">💰 ${meta.budget} ₽/нед</div>
+      <div class="stat-chip pink">⚖️ ${meta.weight} кг</div>
+    `;
+
+    const sections = text.split(/^## /m).filter(Boolean);
+    let html = '';
+
+    sections.forEach(section => {
+      const lines = section.split('\n');
+      const title = lines[0].trim();
+      const body = lines.slice(1).join('\n').trim();
+      html += `<h2>${title}</h2>`;
+
+      if (title.includes('Список продуктов') || title.includes('🛒')) {
+        html += renderShoppingList(body);
+      } else if (title.includes('Меню') || title.includes('🍽️')) {
+        html += renderMenu(body);
+      } else {
+        html += renderGeneric(body);
+      }
+    });
+
+    document.getElementById('resultContent').innerHTML = html;
+    document.getElementById('resultWrapper').classList.add('visible');
+    document.getElementById('resultWrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderMenu(text) {
+    const days = text.split(/^### /m).filter(Boolean);
+    let html = '';
+    days.forEach(day => {
+      const lines = day.split('\n').filter(Boolean);
+      const dayTitle = lines[0];
+      const meals = lines.slice(1);
+      html += `<div class="day-block"><h3>${dayTitle}</h3>`;
+      meals.forEach(meal => {
+        const m = meal.replace(/^[-•*]\s*/, '');
+        const kcalMatch = m.match(/~?(\d+)\s*ккал/i);
+        const kcal = kcalMatch ? kcalMatch[1] + ' ккал' : '';
+        const name = m.replace(/~?\d+\s*ккал/i, '').replace(/[()]/g, '').trim();
+        html += `<div class="meal-row"><span class="meal-name">${name}</span>${kcal ? `<span class="meal-kcal">${kcal}</span>` : ''}</div>`;
+      });
+      html += `</div>`;
+    });
+    return html || renderGeneric(text);
+  }
+
+  function renderShoppingList(text) {
+    const lines = text.split('\n').filter(l => l.includes('|'));
+    const rows = [];
+    lines.forEach(line => {
+      const parts = line.split('|').map(p => p.trim()).filter(Boolean);
+      if (parts.length >= 2 && !parts[0].toLowerCase().includes('продукт') && !parts[0].match(/^[-:]+$/)) {
+        rows.push(parts);
+      }
+    });
+
+    const totalMatch = text.match(/итого[:\s]+(\d[\d\s]*)\s*руб/i);
+    const total = totalMatch ? totalMatch[1].trim() : '';
+
+    if (rows.length === 0) return renderGeneric(text);
+
+    let html = `<table class="shopping-table">
+      <thead><tr><th>Продукт</th><th>Кол-во</th><th>Цена (₽)</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      html += `<tr><td>${r[0]||''}</td><td>${r[1]||''}</td><td>${r[2]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    if (total) {
+      html += `<div class="total-row"><span class="total-label">💰 Итого за неделю</span><span class="total-value">${total} ₽</span></div>`;
+    }
+    return html;
+  }
+
+  function renderGeneric(text) {
+    const lines = text.split('\n');
+    let html = '', inList = false;
+    lines.forEach(line => {
+      line = line.trim();
+      if (!line) { if (inList) { html += '</ul>'; inList = false; } return; }
+      if (line.startsWith('### ')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<h3>${line.slice(4)}</h3>`;
+      } else if (line.match(/^[-•*]\s/)) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += `<li>${line.replace(/^[-•*]\s/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</li>`;
+      } else {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<p>${line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`;
+      }
+    });
+    if (inList) html += '</ul>';
+    return html;
+  }
+</script>
+</body>
+</html>
